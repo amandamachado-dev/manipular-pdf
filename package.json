@@ -1,0 +1,25 @@
+{
+  "name": "manipular-pdf",
+  "version": "1.0.0",
+  "description": "Ferramenta online para manipular arquivos PDF",
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm start --prefix client\"",
+    "dev:client": "npm start --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client",
+    "test": "npm test --prefix client && npm test --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.1"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bootstrap": "^5.3.6",
+    "lucide-react": "^0.511.0",
+    "react-bootstrap": "^2.10.10",
+    "react-dropzone": "^14.3.8",
+    "react-router-dom": "^7.6.1",
+    "react-toastify": "^11.0.5"
+  }
+}

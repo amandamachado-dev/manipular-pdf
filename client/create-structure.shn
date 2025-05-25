@@ -1,0 +1,604 @@
+
+#!/bin/bash
+# Script para criar estrutura completa do projeto Manipular PDF
+# Execute na pasta client/
+
+echo "🚀 Criando estrutura completa do projeto..."
+
+# Criar pastas
+mkdir -p src/components/{common,upload,tools}
+mkdir -p src/pages
+mkdir -p src/services
+mkdir -p src/utils
+mkdir -p src/styles
+mkdir -p src/hooks
+mkdir -p src/context
+
+echo "📁 Pastas criadas!"
+
+# ===========================================
+# COMPONENTES COMUNS
+# ===========================================
+
+# Header.js
+cat > src/components/common/Header.js << 'EOF'
+import React from 'react';
+import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Heart } from 'lucide-react';
+
+const Header = () => {
+  return (
+    <Navbar bg="white" expand="lg" className="border-bottom" style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+      <Container>
+        <Navbar.Brand href="/" className="d-flex align-items-center">
+          <Heart size={24} className="me-2" style={{ color: '#e74c3c', fill: '#e74c3c' }} />
+          <span style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#2c3e50' }}>
+            MANIPULAR PDF
+          </span>
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link href="/juntar" className="fw-semibold mx-2" style={{ color: '#2c3e50' }}>JUNTAR PDF</Nav.Link>
+            <Nav.Link href="/dividir" className="fw-semibold mx-2" style={{ color: '#2c3e50' }}>DIVIDIR PDF</Nav.Link>
+            <Nav.Link href="/comprimir" className="fw-semibold mx-2" style={{ color: '#2c3e50' }}>COMPRIMIR PDF</Nav.Link>
+            <Nav.Link href="/rotacionar" className="fw-semibold mx-2" style={{ color: '#2c3e50' }}>ROTACIONAR PDF</Nav.Link>
+            <Nav.Link href="/converter" className="fw-semibold mx-2" style={{ color: '#2c3e50' }}>CONVERTER</Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+};
+
+export default Header;
+EOF
+
+# Footer.js
+cat > src/components/common/Footer.js << 'EOF'
+import React from 'react';
+import { Container } from 'react-bootstrap';
+
+const Footer = () => {
+  return (
+    <footer className="bg-light mt-5 py-4">
+      <Container>
+        <div className="text-center text-muted">
+          <p>&copy; 2025 Manipular PDF. Todos os direitos reservados.</p>
+          <p>Ferramenta gratuita para manipulação de arquivos PDF</p>
+        </div>
+      </Container>
+    </footer>
+  );
+};
+
+export default Footer;
+EOF
+
+# Loading.js
+cat > src/components/common/Loading.js << 'EOF'
+import React from 'react';
+import { Spinner } from 'react-bootstrap';
+
+const Loading = ({ message = "Carregando..." }) => {
+  return (
+    <div className="text-center my-5">
+      <Spinner animation="border" variant="danger" />
+      <p className="mt-3 text-muted">{message}</p>
+    </div>
+  );
+};
+
+export default Loading;
+EOF
+
+# ===========================================
+# COMPONENTES DE UPLOAD
+# ===========================================
+
+# FileUpload.js
+cat > src/components/upload/FileUpload.js << 'EOF'
+import React from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload } from 'lucide-react';
+
+const FileUpload = ({ onFileSelect, acceptedTypes = '.pdf,.jpg,.jpeg,.png' }) => {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: acceptedTypes,
+    onDrop: onFileSelect
+  });
+
+  return (
+    <div 
+      {...getRootProps()} 
+      className={`border-2 border-dashed p-5 text-center rounded ${isDragActive ? 'border-danger bg-light' : 'border-secondary'}`}
+      style={{ cursor: 'pointer', minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+    >
+      <input {...getInputProps()} />
+      <Upload size={48} className="mx-auto mb-3 text-danger" />
+      <h5>Selecionar arquivos</h5>
+      <p className="text-muted mb-0">ou arraste e solte os arquivos aqui</p>
+    </div>
+  );
+};
+
+export default FileUpload;
+EOF
+
+# ===========================================
+# COMPONENTES DE FERRAMENTAS
+# ===========================================
+
+# ToolCard.js
+cat > src/components/tools/ToolCard.js << 'EOF'
+import React from 'react';
+import { Card } from 'react-bootstrap';
+
+const ToolCard = ({ icon: Icon, title, description, href, iconColor = "#e74c3c" }) => {
+  return (
+    <Card className="h-100 shadow-sm" style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
+      <Card.Body className="text-center d-flex flex-column">
+        <div className="mb-3">
+          <Icon size={48} style={{ color: iconColor }} />
+        </div>
+        <Card.Title className="h5">{title}</Card.Title>
+        <Card.Text className="text-muted flex-grow-1">{description}</Card.Text>
+      </Card.Body>
+    </Card>
+  );
+};
+
+export default ToolCard;
+EOF
+
+# ===========================================
+# PÁGINAS
+# ===========================================
+
+# Home.js
+cat > src/pages/Home.js << 'EOF'
+import React from 'react';
+import { Container, Row, Col } from 'react-bootstrap';
+import ToolCard from '../components/tools/ToolCard';
+import { FileText, Scissors, Minimize, RotateCw, Image } from 'lucide-react';
+
+const Home = () => {
+  const tools = [
+    {
+      icon: FileText,
+      title: "Juntar PDF",
+      description: "Mesclar e juntar PDFs e colocá-los em qualquer ordem que desejar.",
+      href: "/juntar"
+    },
+    {
+      icon: Scissors,
+      title: "Dividir PDF",
+      description: "Separar uma página, ou converter cada página do documento em arquivo PDF independente.",
+      href: "/dividir"
+    },
+    {
+      icon: Minimize,
+      title: "Comprimir PDF",
+      description: "Reduzir o tamanho do seu arquivo PDF, mantendo a melhor qualidade possível.",
+      href: "/comprimir"
+    },
+    {
+      icon: RotateCw,
+      title: "Rotacionar PDF",
+      description: "Rotacionar suas páginas PDF. Rotacionar múltiplas páginas ou apenas algumas páginas.",
+      href: "/rotacionar"
+    },
+    {
+      icon: Image,
+      title: "JPG para PDF",
+      description: "Converter suas imagens JPG para PDF com ajuste perfeito e melhor qualidade.",
+      href: "/jpg-para-pdf"
+    }
+  ];
+
+  return (
+    <div>
+      {/* Hero Section */}
+      <div className="bg-light py-5">
+        <Container>
+          <div className="text-center">
+            <h1 className="display-4 mb-4">Ferramentas online para os amantes de PDF</h1>
+            <p className="lead text-muted">
+              Ferramenta online e completamente gratuita para juntar PDF, dividir PDF, comprimir PDF,<br />
+              converter documentos para PDF e JPG para PDF. Não requer instalação.
+            </p>
+          </div>
+        </Container>
+      </div>
+
+      {/* Tools Grid */}
+      <Container className="py-5">
+        <Row>
+          {tools.map((tool, index) => (
+            <Col md={6} lg={4} className="mb-4" key={index}>
+              <a href={tool.href} className="text-decoration-none">
+                <ToolCard {...tool} />
+              </a>
+            </Col>
+          ))}
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+export default Home;
+EOF
+
+# MergePDF.js
+cat > src/pages/MergePDF.js << 'EOF'
+import React, { useState } from 'react';
+import { Container, Button } from 'react-bootstrap';
+import FileUpload from '../components/upload/FileUpload';
+import Loading from '../components/common/Loading';
+
+const MergePDF = () => {
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleFileSelect = (selectedFiles) => {
+    setFiles(selectedFiles);
+  };
+
+  const handleMerge = async () => {
+    setLoading(true);
+    // TODO: Implementar lógica de junção
+    setTimeout(() => setLoading(false), 2000);
+  };
+
+  return (
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <h1>Juntar arquivos PDF</h1>
+        <p className="text-muted">Mesclar e juntar PDFs e colocá-los em qualquer ordem que desejar. É tudo muito fácil e rápido!</p>
+      </div>
+
+      {loading ? (
+        <Loading message="Juntando arquivos PDF..." />
+      ) : (
+        <>
+          <FileUpload onFileSelect={handleFileSelect} acceptedTypes=".pdf" />
+          
+          {files.length > 0 && (
+            <div className="text-center mt-4">
+              <p>{files.length} arquivo(s) selecionado(s)</p>
+              <Button variant="danger" size="lg" onClick={handleMerge}>
+                Juntar PDF
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </Container>
+  );
+};
+
+export default MergePDF;
+EOF
+
+# SplitPDF.js
+cat > src/pages/SplitPDF.js << 'EOF'
+import React, { useState } from 'react';
+import { Container } from 'react-bootstrap';
+import FileUpload from '../components/upload/FileUpload';
+
+const SplitPDF = () => {
+  const [file, setFile] = useState(null);
+
+  const handleFileSelect = (selectedFiles) => {
+    setFile(selectedFiles[0]);
+  };
+
+  return (
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <h1>Dividir PDF</h1>
+        <p className="text-muted">Separar uma página, ou converter cada página do documento em arquivo PDF independente.</p>
+      </div>
+
+      <FileUpload onFileSelect={handleFileSelect} acceptedTypes=".pdf" />
+      
+      {file && (
+        <div className="text-center mt-4">
+          <p>Arquivo selecionado: {file.name}</p>
+          {/* TODO: Adicionar opções de divisão */}
+        </div>
+      )}
+    </Container>
+  );
+};
+
+export default SplitPDF;
+EOF
+
+# CompressPDF.js
+cat > src/pages/CompressPDF.js << 'EOF'
+import React, { useState } from 'react';
+import { Container } from 'react-bootstrap';
+import FileUpload from '../components/upload/FileUpload';
+
+const CompressPDF = () => {
+  const [file, setFile] = useState(null);
+
+  const handleFileSelect = (selectedFiles) => {
+    setFile(selectedFiles[0]);
+  };
+
+  return (
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <h1>Comprimir PDF</h1>
+        <p className="text-muted">Reduzir o tamanho do seu arquivo PDF, mantendo a melhor qualidade possível.</p>
+      </div>
+
+      <FileUpload onFileSelect={handleFileSelect} acceptedTypes=".pdf" />
+    </Container>
+  );
+};
+
+export default CompressPDF;
+EOF
+
+# RotatePDF.js
+cat > src/pages/RotatePDF.js << 'EOF'
+import React, { useState } from 'react';
+import { Container } from 'react-bootstrap';
+import FileUpload from '../components/upload/FileUpload';
+
+const RotatePDF = () => {
+  const [file, setFile] = useState(null);
+
+  const handleFileSelect = (selectedFiles) => {
+    setFile(selectedFiles[0]);
+  };
+
+  return (
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <h1>Rotacionar PDF</h1>
+        <p className="text-muted">Rotacionar suas páginas PDF. Rotacionar múltiplas páginas ou apenas algumas páginas.</p>
+      </div>
+
+      <FileUpload onFileSelect={handleFileSelect} acceptedTypes=".pdf" />
+    </Container>
+  );
+};
+
+export default RotatePDF;
+EOF
+
+# JPGtoPDF.js
+cat > src/pages/JPGtoPDF.js << 'EOF'
+import React, { useState } from 'react';
+import { Container } from 'react-bootstrap';
+import FileUpload from '../components/upload/FileUpload';
+
+const JPGtoPDF = () => {
+  const [files, setFiles] = useState([]);
+
+  const handleFileSelect = (selectedFiles) => {
+    setFiles(selectedFiles);
+  };
+
+  return (
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <h1>JPG para PDF</h1>
+        <p className="text-muted">Converter suas imagens JPG para PDF com ajuste perfeito e melhor qualidade.</p>
+      </div>
+
+      <FileUpload onFileSelect={handleFileSelect} acceptedTypes=".jpg,.jpeg,.png" />
+      
+      {files.length > 0 && (
+        <div className="text-center mt-4">
+          <p>{files.length} imagem(ns) selecionada(s)</p>
+        </div>
+      )}
+    </Container>
+  );
+};
+
+export default JPGtoPDF;
+EOF
+
+# ===========================================
+# SERVIÇOS
+# ===========================================
+
+# api.js
+cat > src/services/api.js << 'EOF'
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 30000, // 30 segundos
+});
+
+export default api;
+EOF
+
+# pdfService.js
+cat > src/services/pdfService.js << 'EOF'
+import api from './api';
+
+export const uploadPDF = async (file) => {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  
+  const response = await api.post('/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return response.data;
+};
+
+export const mergePDFs = async (files) => {
+  const formData = new FormData();
+  files.forEach(file => formData.append('pdfs', file));
+  
+  const response = await api.post('/merge', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    responseType: 'blob',
+  });
+  
+  return response.data;
+};
+
+export const splitPDF = async (file, options) => {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  formData.append('options', JSON.stringify(options));
+  
+  const response = await api.post('/split', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return response.data;
+};
+
+export const rotatePDF = async (file, rotation) => {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  formData.append('rotation', rotation);
+  
+  const response = await api.post('/rotate', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    responseType: 'blob',
+  });
+  
+  return response.data;
+};
+
+export const imageToPDF = async (files) => {
+  const formData = new FormData();
+  files.forEach(file => formData.append('images', file));
+  
+  const response = await api.post('/image-to-pdf', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    responseType: 'blob',
+  });
+  
+  return response.data;
+};
+EOF
+
+# ===========================================
+# UTILS
+# ===========================================
+
+# constants.js
+cat > src/utils/constants.js << 'EOF'
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const SUPPORTED_PDF_TYPES = ['application/pdf'];
+export const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
+export const ERROR_MESSAGES = {
+  FILE_TOO_LARGE: 'Arquivo muito grande. Tamanho máximo: 10MB',
+  INVALID_FILE_TYPE: 'Tipo de arquivo não suportado',
+  NETWORK_ERROR: 'Erro de conexão. Tente novamente.',
+  PROCESSING_ERROR: 'Erro ao processar arquivo. Tente novamente.',
+};
+EOF
+
+# helpers.js
+cat > src/utils/helpers.js << 'EOF'
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+export const validateFile = (file, allowedTypes, maxSize) => {
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Tipo de arquivo não suportado');
+  }
+  
+  if (file.size > maxSize) {
+    throw new Error('Arquivo muito grande');
+  }
+  
+  return true;
+};
+
+export const downloadFile = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+EOF
+
+# ===========================================
+# APP.JS ATUALIZADO
+# ===========================================
+
+cat > src/App.js << 'EOF'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/common/Header';
+import Footer from './components/common/Footer';
+import Home from './pages/Home';
+import MergePDF from './pages/MergePDF';
+import SplitPDF from './pages/SplitPDF';
+import CompressPDF from './pages/CompressPDF';
+import RotatePDF from './pages/RotatePDF';
+import JPGtoPDF from './pages/JPGtoPDF';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <div className="App d-flex flex-column min-vh-100">
+        <Header />
+        <main className="flex-grow-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/juntar" element={<MergePDF />} />
+            <Route path="/dividir" element={<SplitPDF />} />
+            <Route path="/comprimir" element={<CompressPDF />} />
+            <Route path="/rotacionar" element={<RotatePDF />} />
+            <Route path="/jpg-para-pdf" element={<JPGtoPDF />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+};
+
+export default App;
+EOF
+
+echo "✅ Estrutura completa criada!"
+echo "📂 Componentes: Header, Footer, Loading, FileUpload, ToolCard"
+echo "📄 Páginas: Home, MergePDF, SplitPDF, CompressPDF, RotatePDF, JPGtoPDF"
+echo "🔧 Serviços: API e PDF services"
+echo "🛠️ Utils: Constants e Helpers"
+echo ""
+echo "🚀 Agora você pode executar: npm start"
+echo "🎯 Navegue para diferentes páginas usando as URLs"
