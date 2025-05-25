@@ -8,6 +8,7 @@ console.log('🎛️ Controlador PDF carregado');
 exports.mergePDFs = async (req, res) => {
   try {
     console.log('📥 Requisição de merge recebida:', req.files?.length, 'arquivos');
+    console.log('📋 Dados recebidos:', req.body);
     
     if (!req.files || req.files.length < 2) {
       return res.status(400).json({ error: 'Pelo menos 2 arquivos PDF são necessários' });
@@ -15,12 +16,25 @@ exports.mergePDFs = async (req, res) => {
 
     const mergedPdf = await PDFDocument.create();
 
-    for (const file of req.files) {
-      console.log('📄 Processando arquivo:', file.originalname);
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const rotationKey = `rotation-${i}`;
+      const rotation = parseInt(req.body[rotationKey] || 0);
+      
+      console.log(`�� Processando arquivo ${i + 1}: ${file.originalname} (rotação: ${rotation}°)`);
+      
       const pdfBytes = await fs.readFile(file.path);
       const pdf = await PDFDocument.load(pdfBytes);
       const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-      pages.forEach((page) => mergedPdf.addPage(page));
+      
+      pages.forEach((page) => {
+        // Aplicar rotação se especificada
+        if (rotation && rotation !== 0) {
+          page.setRotation({ type: 'degrees', angle: rotation });
+          console.log(`🔄 Rotação ${rotation}° aplicada à página`);
+        }
+        mergedPdf.addPage(page);
+      });
       
       await fs.remove(file.path);
     }
@@ -29,7 +43,6 @@ exports.mergePDFs = async (req, res) => {
     
     console.log('✅ PDF criado com sucesso! Tamanho:', pdfBytes.length, 'bytes');
     
-    // Headers corretos para PDF
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename="merged-document.pdf"',
@@ -38,7 +51,6 @@ exports.mergePDFs = async (req, res) => {
       'Cache-Control': 'no-cache'
     });
     
-    // Enviar como Buffer
     res.end(Buffer.from(pdfBytes));
 
   } catch (error) {

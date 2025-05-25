@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Container, Button, Alert, Row, Col, Card } from 'react-bootstrap';
+import { Container, Button, Alert, Row, Col } from 'react-bootstrap';
 import FileUpload from '../components/upload/FileUpload';
 import Loading from '../components/common/Loading';
-import { GripVertical, X, FileText, ArrowUp, ArrowDown } from 'lucide-react';
+import PDFCard from '../components/upload/PDFCard';
 import api from '../services/api';
 
 const MergePDF = () => {
@@ -28,7 +28,8 @@ const MergePDF = () => {
       id: generateUniqueId(),
       file: file,
       name: file.name,
-      size: file.size
+      size: file.size,
+      rotation: 0 // Rotação inicial
     }));
     
     setFiles(prevFiles => [...prevFiles, ...filesWithId]);
@@ -47,7 +48,12 @@ const MergePDF = () => {
     
     try {
       const formData = new FormData();
-      files.forEach(fileItem => formData.append('pdfs', fileItem.file));
+      
+      // Enviar arquivos com informações de rotação
+      files.forEach((fileItem, index) => {
+        formData.append('pdfs', fileItem.file);
+        formData.append(`rotation-${index}`, fileItem.rotation.toString());
+      });
       
       const response = await api.post('/pdf/merge', formData, {
         headers: {
@@ -80,7 +86,6 @@ const MergePDF = () => {
     setFiles(prevFiles => prevFiles.filter(fileItem => fileItem.id !== id));
   }, []);
 
-  // Mover arquivo para cima
   const moveUp = (index) => {
     if (index === 0) return;
     const newFiles = [...files];
@@ -88,7 +93,6 @@ const MergePDF = () => {
     setFiles(newFiles);
   };
 
-  // Mover arquivo para baixo
   const moveDown = (index) => {
     if (index === files.length - 1) return;
     const newFiles = [...files];
@@ -96,11 +100,21 @@ const MergePDF = () => {
     setFiles(newFiles);
   };
 
-  // Drag and Drop nativo HTML5
+  // Rotacionar PDF individual
+  const rotatePDF = useCallback((id) => {
+    setFiles(prevFiles => 
+      prevFiles.map(fileItem => 
+        fileItem.id === id 
+          ? { ...fileItem, rotation: (fileItem.rotation + 90) % 360 }
+          : fileItem
+      )
+    );
+  }, []);
+
+  // Drag and Drop
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', index.toString());
   };
 
   const handleDragOver = (e) => {
@@ -142,111 +156,26 @@ const MergePDF = () => {
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5>Arquivos selecionados ({files.length}):</h5>
                 <small className="text-muted">
-                  Use as setas ou arraste para reordenar
+                  🔄 Clique no ícone de rotação para girar • ↕️ Use setas para reordenar
                 </small>
               </div>
               
               <Row>
                 {files.map((fileItem, index) => (
-                  <Col md={6} lg={4} key={fileItem.id} className="mb-4">
-                    <Card 
-                      className={`h-100 shadow-sm ${draggedIndex === index ? 'border-primary' : ''}`}
-                      style={{ 
-                        cursor: 'move',
-                        transition: 'all 0.2s ease',
-                        opacity: draggedIndex === index ? 0.5 : 1
-                      }}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
+                  <Col md={6} lg={4} xl={3} key={fileItem.id} className="mb-4">
+                    <PDFCard
+                      fileItem={fileItem}
+                      index={index}
+                      totalFiles={files.length}
+                      onMoveUp={moveUp}
+                      onMoveDown={moveDown}
+                      onRemove={removeFile}
+                      onRotate={rotatePDF}
+                      onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <Card.Body className="text-center p-3">
-                        {/* Número da ordem */}
-                        <div className="position-relative mb-3">
-                          <div 
-                            className="badge bg-primary position-absolute"
-                            style={{ top: '-10px', right: '-10px', fontSize: '0.8rem' }}
-                          >
-                            #{index + 1}
-                          </div>
-                          
-                          {/* Miniatura PDF */}
-                          <div 
-                            className="mx-auto mb-2 d-flex align-items-center justify-content-center"
-                            style={{
-                              width: '80px',
-                              height: '100px',
-                              backgroundColor: '#f8f9fa',
-                              border: '2px solid #e9ecef',
-                              borderRadius: '8px'
-                            }}
-                          >
-                            <FileText size={40} color="#dc3545" />
-                          </div>
-                        </div>
-
-                        {/* Nome do arquivo */}
-                        <Card.Title 
-                          className="h6 mb-2"
-                          style={{ 
-                            fontSize: '0.9rem',
-                            lineHeight: '1.2',
-                            height: '2.4rem',
-                            overflow: 'hidden',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical'
-                          }}
-                          title={fileItem.name}
-                        >
-                          {fileItem.name}
-                        </Card.Title>
-
-                        {/* Tamanho */}
-                        <Card.Text className="text-muted small mb-3">
-                          {(fileItem.size / 1024 / 1024).toFixed(2)} MB
-                        </Card.Text>
-
-                        {/* Controles */}
-                        <div className="d-flex justify-content-center gap-1">
-                          <Button 
-                            variant="outline-secondary" 
-                            size="sm"
-                            onClick={() => moveUp(index)}
-                            disabled={index === 0}
-                            title="Mover para cima"
-                          >
-                            <ArrowUp size={14} />
-                          </Button>
-                          <Button 
-                            variant="outline-secondary" 
-                            size="sm"
-                            onClick={() => moveDown(index)}
-                            disabled={index === files.length - 1}
-                            title="Mover para baixo"
-                          >
-                            <ArrowDown size={14} />
-                          </Button>
-                          <Button 
-                            variant="outline-danger" 
-                            size="sm"
-                            onClick={() => removeFile(fileItem.id)}
-                            title="Remover arquivo"
-                          >
-                            <X size={14} />
-                          </Button>
-                        </div>
-
-                        {/* Indicador de drag */}
-                        <div className="mt-2">
-                          <small className="text-muted">
-                            <GripVertical size={12} className="me-1" />
-                            Arraste para reordenar
-                          </small>
-                        </div>
-                      </Card.Body>
-                    </Card>
+                      onDrop={handleDrop}
+                      isDragging={draggedIndex === index}
+                    />
                   </Col>
                 ))}
               </Row>
